@@ -13,24 +13,38 @@ var locales = [];
 
 // Init module
 function init(options){
+  var prefix="";
+
   if(options){
     if(options.path){
-      localesPath = path.join(require('path').dirname(require.main.filename),options.path);
+      if(fs.existsSync(options.path)){
+        localesPath = options.path;
+      }else{
+        localesPath = path.join(require('path').dirname(require.main.filename),options.path);
+      }
     };
 
     if(options.defaultLocale){
       defaultLocale = options.defaultLocale;
     };
+
+    if(options.prefix){
+      prefix = options.prefix;
+    };
   };
 
   // Load locales
-  var files = fs.readdirSync(localesPath);
-  for (var i = 0; i < files.length; i++) {
-    if(path.extname(files[i])==".json"){
-      var locale = path.parse(files[i]).name;
-      locales[locale] = JSON.parse(fs.readFileSync(path.join(localesPath, files[i])));
+  if(fs.existsSync(localesPath)){
+    var files = fs.readdirSync(localesPath);
+    for (var i = 0; i < files.length; i++) {
+      if(path.extname(files[i])==".json"){
+        var locale = path.parse(files[i]).name;
+        if(!locales[prefix+'_'+locale]){
+          locales[prefix+'_'+locale] = JSON.parse(fs.readFileSync(path.join(localesPath, files[i])));
+        };
+      };
     };
-  };
+  }''
 
   // Export var
   return {
@@ -65,13 +79,15 @@ function _fillVars(line, vars){
 
   return line;
 };
-function get(key, defaultValue, vars, locale){
+function get(key, defaultValue, vars, locale, prefix){
+  var prefix = prefix || '';
+
   if(!locale && this && this.lang){
     locale = this.lang;
   };
 
   if(key){
-    var locale = locale || defaultLocale;
+    var locale = prefix+'_'+locale || prefix+'_'+defaultLocale;
     if(!locales[locale]){
       locale = defaultLocale;
     };
